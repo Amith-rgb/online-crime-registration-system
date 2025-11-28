@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+<section class="hero" role="banner">
+    <div class="hero-panel card">
+        <div class="hero-copy">
+            <h1>Report Crime Online — Securely & Confidentially</h1>
+            <p>Quickly file complaints, track case progress, and connect with local authorities. Built to be trusted, clear, and simple.</p>
+            <div class="hero-ctas">
+                <a class="btn-primary" href="{{ url_for('report_crime') }}">File Complaint</a>
+                <a class="btn-ghost" href="{{ url_for('dashboard') }}">Track Status</a>
+                <a class="btn-ghost" href="{{ url_for('login') }}">Login</a>
+            </div>
+            <div style="margin-top:1rem;color:rgba(248,250,252,0.7);font-size:0.9rem">Data is encrypted at rest & in transit — your privacy matters.</div>
+        </div>
+        <div style="width:320px;display:flex;align-items:center;justify-content:center">
+            <!-- hint at dashboard card preview -->
+            <div class="card" style="width:100%;padding:.75rem">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div>
+                        <div style="font-weight:700;color:var(--cyan)">My Complaints</div>
+                        <div style="font-size:1.6rem;color:var(--surface);font-weight:800">12</div>
+                    </div>
+                    <div style="text-align:right;color:rgba(255,255,255,0.8)">Recent update<br><small style="color:rgba(255,255,255,0.7)">2 hrs ago</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

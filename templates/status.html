@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Your Reports{% endblock %}
+{% block content %}
+<h2 class="neon-title">Your Reports</h2>
+<div class="grid">
+    {% for report in reports %}
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>#{{ report.id }}</strong> — {{ report.crime_type }}</div>
+            <div><span class="status-label status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span></div>
+        </div>
+        <!-- Use default to avoid rendering None -->
+        <p>{{ report.description|default('') }}</p>
+        <div style="display:flex;gap:1rem;align-items:flex-start">
+            <div style="flex:1">
+                <div class="small-muted">Location</div>
+                <div>{{ report.location }}{% if report.latitude and report.longitude %} ({{ report.latitude }}, {{ report.longitude }}){% endif %}</div>
+                {% if report.image_path %}
+                <div style="margin-top:.5rem"><img src="/{{ report.image_path }}" style="max-width:180px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"></div>
+                {% endif %}
+            </div>
+            <div style="width:240px">
+                <div class="small-muted">Timeline</div>
+                <div class="timeline">
+                    <!-- Safely format timestamps only if present -->
+                    <div class="step"><div class="dot"></div><div class="meta">Reported: {{ report.timestamp.strftime('%Y-%m-%d %H:%M') if report.timestamp else '' }}</div></div>
+                    {% for a in (report.audits or []) %}
+                    <div class="step"><div class="dot"></div><div class="meta">{{ a.new_status }} — {{ a.timestamp.strftime('%Y-%m-%d %H:%M') if a.timestamp else '' }}</div></div>
+                    {% endfor %}
+                </div>
+                {% if report.latitude and report.longitude %}
+                <div id="map-{{ report.id }}" style="height:140px;margin-top:.5rem;border-radius:8px;overflow:hidden"></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        // Build a small array of maps to initialize using JSON serialization to avoid JS/Jinja mixing issues
+        var mapsData = {{ [ {'id': report.id, 'lat': report.latitude, 'lon': report.longitude} for report in reports if report.latitude and report.longitude ] | tojson | safe }}; 
+
+        mapsData.forEach(function(r){
+            try {
+                var elId = 'map-' + r.id;
+                // Ensure the element exists before initializing
+                var el = document.getElementById(elId);
+                if (!el) return;
+                var map = L.map(elId, { zoomControl: false }).setView([r.lat, r.lon], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }).addTo(map);
+                L.marker([r.lat, r.lon]).addTo(map);
+            } catch (e) {
+                console.warn('Map init failed for report ' + r.id + ':', e);
+            }
+        });
+    } catch(e) {
+        console.warn('Leaflet init skipped due to error:', e);
+    }
+});
+</script>
+
+{% endblock %}

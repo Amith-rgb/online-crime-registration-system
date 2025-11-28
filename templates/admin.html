@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block content %}
+<h2 class="neon-title">Admin Panel</h2>
+
+<div class="d-flex align-items-center mb-3 gap-2">
+    <form method="get" class="d-flex" style="gap:.5rem;">
+        <input name="q" class="neon-input" placeholder="Search by user, type, location, description" value="{{ q|default('') }}" />
+        <button type="submit" class="neon-btn">Search</button>
+        <a href="{{ url_for('admin_panel') }}" class="neon-link" style="align-self:center;margin-left:.5rem;">Reset</a>
+    </form>
+    <a href="{{ url_for('export_reports') }}?q={{ q|urlencode }}" class="neon-btn" style="margin-left:auto;">Export CSV</a>
+</div>
+
+<div class="stats-container" role="region" aria-label="Admin summary">
+    <div class="stat-card">
+        <h3>Total reports</h3>
+        <p class="stat-number">{{ total_reports }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Pending</h3>
+        <p class="stat-number">{{ pending }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Investigating</h3>
+        <p class="stat-number">{{ investigating }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Resolved</h3>
+        <p class="stat-number">{{ resolved }}</p>
+    </div>
+</div>
+
+<div class="card" role="region" aria-label="Reports table">
+    <div class="table-responsive">
+        <p id="reports-desc" class="visually-hidden">Table of reports: ID, user, type, description, location and status with update control.</p>
+        <table class="neon-table" aria-describedby="reports-desc">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr id="report-row-{{ report.id }}">
+                    <td class="cell-id">{{ report.id }}</td>
+                    <td class="cell-user">{{ report.user.username if report.user else 'Unknown' }}</td>
+                    <td class="cell-type">{{ report.crime_type }}</td>
+                    <td class="cell-desc">
+                        <span title="{{ report.description or '' }}">
+                            {{ (report.description or '')[:70] }}{% if report.description and report.description|length > 70 %}...{% endif %}
+                        </span>
+                    </td>
+                    <td class="cell-location">{{ report.location }}</td>
+                    <td class="cell-status">
+                        <span id="status-label-{{ report.id }}" class="status-label status-{{ (report.status|lower|replace(' ', '-')) if report.status else 'unknown' }}">
+                            {{ report.status if report.status else 'Unknown' }}
+                        </span>
+                    </td>
+                    <td class="cell-update">
+                        <select class="status-select" onchange="updateStatus({{ report.id }}, this.value)" aria-label="Change status for report {{ report.id }}">
+                            <option value="Pending" {% if report.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Investigating" {% if report.status == 'Investigating' %}selected{% endif %}>Investigating</option>
+                            <option value="Resolved" {% if report.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                            {% if report.status and report.status not in ['Pending','Investigating','Resolved'] %}
+                                <option value="{{ report.status|e }}" selected>{{ report.status|e }}</option>
+                            {% elif not report.status %}
+                                <option value="Unknown" selected>Unknown</option>
+                            {% endif %}
+                        </select>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages and total_pages > 1 %}
+    <nav aria-label="Reports pagination" class="mt-3">
+        <ul class="pagination" style="gap:.25rem;display:flex;flex-wrap:wrap;">
+            {% set prev = page-1 if page>1 else 1 %}
+            <li class="page-item {% if page<=1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin_panel', q=q, page=prev) }}">Previous</a>
+            </li>
+            {% for p in range(1, total_pages+1) %}
+                {% if total_pages > 10 %}
+                    {% if p==1 or p==total_pages or (p >= page-2 and p <= page+2) %}
+                        <li class="page-item {% if p==page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_panel', q=q, page=p) }}">{{ p }}</a>
+                        </li>
+                        {% if p==1 and page>4 %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+                        {% if p==total_pages-1 and page<total_pages-3 %}{% endif %}
+                    {% endif %}
+                {% else %}
+                    <li class="page-item {% if p==page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_panel', q=q, page=p) }}">{{ p }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            {% set nxt = page+1 if page < total_pages else total_pages %}
+            <li class="page-item {% if page>=total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin_panel', q=q, page=nxt) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+
+    <div id="status-message" class="status-message" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+    function sanitizeClass(str){
+        return String(str || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+    }
+
+    function updateStatus(id, status) {
+        fetch(`/update_status/${id}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: status})
+        }).then(res => {
+            if (!res.ok) return res.json().catch(()=>({ error: res.statusText || 'Server error' }));
+            return res.json();
+        }).then(data => {
+            const msg = document.getElementById('status-message');
+            const row = document.getElementById(`report-row-${id}`);
+            const label = document.getElementById(`status-label-${id}`);
+            if (data && data.success) {
+                msg.textContent = `Report #${id} status updated.`;
+                // update pill text + class
+                if (label) {
+                    // remove existing status-* classes
+                    Array.from(label.classList).forEach(c => {
+                        if (c.startsWith('status-') && c !== 'status-label') label.classList.remove(c);
+                    });
+                    label.classList.add('status-' + sanitizeClass(status));
+                    label.textContent = status;
+                }
+                // highlight row
+                if (row) {
+                    row.style.transition = 'background-color 0.35s ease';
+                    row.style.backgroundColor = '#eef8ef';
+                    setTimeout(()=>{ row.style.backgroundColor = ''; }, 1400);
+                }
+            } else {
+                msg.textContent = (data && data.error) ? data.error : 'Update failed.';
+            }
+            setTimeout(()=>{ msg.textContent = ''; }, 3000);
+        }).catch(()=> {
+            const msg = document.getElementById('status-message');
+            msg.textContent = 'Update failed (network).';
+            setTimeout(()=>{ msg.textContent = ''; }, 3000);
+        });
+    }
+</script>
+{% endblock %}

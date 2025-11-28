@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Report Crime{% endblock %}
+{% block content %}
+<div class="card">
+    <h2 class="neon-title">Report a Crime</h2>
+
+    <!-- Stepper: visual only -->
+    <div class="form-stepper" aria-hidden="true">
+        <div class="step active" data-step="1">1. Details</div>
+        <div class="step" data-step="2">2. Location</div>
+        <div class="step" data-step="3">3. Review</div>
+    </div>
+
+    <!-- MULTI-STEP FORM -->
+    <form method="POST" id="reportForm" class="login-form" novalidate enctype="multipart/form-data">
+        <!-- Step 1: Details -->
+        <div class="step-panel" data-step="1">
+            <div class="form-group">
+                <label for="crime_type">Type of Crime</label>
+                <select name="crime_type" id="crime_type" required class="neon-input">
+                    <option value="">Select Type...</option>
+                    <option value="Theft">Theft</option>
+                    <option value="Assault">Assault</option>
+                    <option value="Vandalism">Vandalism</option>
+                    <option value="Burglary">Burglary</option>
+                    <option value="Robbery">Robbery</option>
+                    <option value="Fraud">Fraud</option>
+                    <option value="Cybercrime">Cybercrime</option>
+                    <option value="Missing Person">Missing Person</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea name="description" id="description" placeholder="Provide a detailed description..." required class="neon-input" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="attachment">Attach image (optional)</label>
+                <input type="file" name="attachment" id="attachment" accept="image/*" class="neon-input" />
+                <div id="attachment-preview" style="margin-top:.5rem;display:none;">
+                    <img id="attachment-img" src="" alt="Preview" style="max-width:220px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+                </div>
+            </div>
+
+            <div class="form-actions" style="display:flex;justify-content:flex-end;gap:.5rem">
+                <button type="button" class="neon-btn" data-action="next">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Location -->
+        <div class="step-panel" data-step="2" hidden>
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" name="location" id="location" placeholder="e.g., 123 Main St, City" required class="neon-input" />
+            </div>
+
+            <div style="display:flex;gap:.5rem;align-items:center">
+                <button type="button" id="use-location" class="btn-ghost">Use my location</button>
+                <small style="color:rgba(255,255,255,0.8)">Click to fill lat/lon from your browser (requires permission)</small>
+            </div>
+
+            <!-- hidden lat/lon -->
+            <input type="hidden" name="latitude" id="latitude" />
+            <input type="hidden" name="longitude" id="longitude" />
+
+            <div class="form-group">
+                <label for="additional">Additional details (optional)</label>
+                <textarea name="additional" id="additional" class="neon-input" rows="2" placeholder="Any other info (witnesses, time...)"></textarea>
+            </div>
+
+            <div class="form-actions" style="display:flex;justify-content:space-between;gap:.5rem">
+                <button type="button" class="neon-btn" data-action="back">Back</button>
+                <button type="button" class="neon-btn" data-action="next">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Review -->
+        <div class="step-panel" data-step="3" hidden>
+            <div class="form-group">
+                <label>Review your report</label>
+                <div class="card" style="padding:.75rem">
+                    <p><strong>Type:</strong> <span id="review-type"></span></p>
+                    <p><strong>Description:</strong> <span id="review-description"></span></p>
+                    <p><strong>Location:</strong> <span id="review-location"></span></p>
+                    <p><strong>Additional:</strong> <span id="review-additional"></span></p>
+                </div>
+            </div>
+
+            <div class="form-actions" style="display:flex;justify-content:space-between;gap:.5rem">
+                <button type="button" class="neon-btn" data-action="back">Back</button>
+                <button type="submit" class="neon-btn">Submit Report</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
