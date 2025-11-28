@@ -48,6 +48,7 @@ project/
 ```
 
 ⚙️ Installation & Setup
+
 1️⃣ Clone the repository
 git clone https://github.com/Amith-rgb/online-crime-registration-system.git
 cd online-crime-registration-system
