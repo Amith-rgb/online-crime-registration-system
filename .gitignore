@@ -1,0 +1,11 @@
+﻿# Python cache
+"__pycache__/" | Out-File -FilePath ".gitignore" -Append
+"*.py[cod]"     | Out-File -FilePath ".gitignore" -Append
+"*.pyo"         | Out-File -FilePath ".gitignore" -Append
+"*.pyd"         | Out-File -FilePath ".gitignore" -Append
+"venv/"         | Out-File -FilePath ".gitignore" -Append
+".env/"         | Out-File -FilePath ".gitignore" -Append
+".vscode/"      | Out-File -FilePath ".gitignore" -Append
+".idea/"        | Out-File -FilePath ".gitignore" -Append
+"*.db"          | Out-File -FilePath ".gitignore" -Append
+"instance/"     | Out-File -FilePath ".gitignore" -Append
